@@ -69,7 +69,6 @@ def get_repo_commits_num():
     return ApiTool.api_get("https://api.github.com/repos/CTFd/CTFd/commits")
 
 
-
 def main():
     for item in ALL_REQUESTS_LIST:
         num = item['func']()
