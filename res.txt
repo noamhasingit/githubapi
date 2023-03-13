@@ -1,0 +1,2 @@
+https://api.github.com/repos/CTFd/CTFd/commits?per_page=100
+How many commits CTFd repo has? - 2
