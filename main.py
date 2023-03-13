@@ -72,7 +72,6 @@ def get_repo_commits_num():
 def main():
     for item in ALL_REQUESTS_LIST:
         num = item['func']()
-        print(num)
         print(f"{item['description']} - {len(num)}")
 
 
