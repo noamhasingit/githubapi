@@ -104,13 +104,13 @@ def get_repo_commits_num():
     """ How many commits """
     return len(ApiTool.api_get("https://api.github.com/repos/CTFd/CTFd/commits"))
 
-
+# TODO
 @register(name="get_repo_commits_contributors_num", description="descending order list of contributors per amount of commits")
 def get_repo_commits_contributors_num():
     """ descending order list of contributors per amount of commits """
     return len(ApiTool.api_get("https://api.github.com/repos/CTFd/CTFd/commits"))
 
-
+# TODO
 @register(name="get_repo_pulls_contributors_num", description="descending order list of contributors per amount of pull requests")
 def get_repo_pulls_contributors_num():
     """ How many forks """
