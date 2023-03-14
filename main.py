@@ -7,6 +7,10 @@ parser = argparse.ArgumentParser()
 parser.add_argument("token", help="GitHub token of the account")
 args = parser.parse_args()
 TOKEN = args.token
+
+# there is a limitation on number of requests per day/min
+PAGINATION_DEMO_FUSE = 2
+# list of all prob functions
 ALL_REQUESTS_LIST = []
 
 
@@ -24,31 +28,37 @@ def register(*args, **kwargs):
 
 class ApiTool:
     @staticmethod
+    def get_next_page(page: str):
+        return page if page.headers.get('link') is not None else None
+
+
     def api_get(url: str, token: str = TOKEN):
         headers = {'Accept': 'application/vnd.github+json',
                    'Authorization': token,
                    'X-GitHub-Api-Version': '2022-11-28',
                    }
-        # TODO to add pagination
-        response = requests.get(url, headers=headers,  timeout=30)
-        response.raise_for_status()
-        return json.loads(response.content)
-
-        # while True:
-        #     response = requests.get(url, headers=headers, timeout=30)
-        #     import pdb
-        #     pdb.set_trace()
-        #     response.raise_for_status()
-        #     response_all.extend([json.loads(response.content)])
-        #     if 'Link' in response.headers and 'next' in response.headers['Link']:
-        #         link_list = response.headers['Link'].replace(' ', '').split(',')
-        #         for _link in link_list:
-        #             print(_link.replace('<', '').replace('>', ''))
-        #         print(response.headers['Link'])
-
-        #     else:
-        #         break
-        # return response_all
+        response = requests.get(f'{url}', headers=headers, timeout=30)
+        response_all = []
+        new_content = json.loads(response.content)
+        if type(new_content) is dict:
+            response_all.append(json.loads(response.content))
+        else:
+            response_all.extend(json.loads(response.content))
+        limitation_fuse = PAGINATION_DEMO_FUSE
+        while ApiTool.get_next_page(response) is not None and limitation_fuse > 0:
+            limitation_fuse -= 1
+            try:
+                next_page_url = response.links['next']['url']
+                response = requests.get(next_page_url, timeout=30, headers=headers)
+                response.raise_for_status()
+                new_content = json.loads(response.content)
+                if type(new_content) is dict:
+                    response_all.append(json.loads(response.content))
+                else:
+                    response_all.extend(json.loads(response.content))
+            except KeyError:
+                break
+        return response_all
 
 
 @register(name="get_latest_releases",
@@ -73,7 +83,7 @@ def get_forks_num():
 def get_repo_stars_num():
     """ How many stars """
     all_repo = ApiTool.api_get("https://api.github.com/search/repositories?q=org:CTFd&sort=stars&order=desc")
-    single_repo = [item for item in all_repo['items'] if 'CTFd' in item['name']]
+    single_repo = [item for item in all_repo[0]['items'] if 'CTFd' in item['name']]
     return single_repo[0]['stargazers_count']
 
 
@@ -92,13 +102,12 @@ def get_repo_pulls_num():
 @register(name="get_repo_commits_num", description="How many commits CTFd repo has?")
 def get_repo_commits_num():
     """ How many commits """
-    return len(ApiTool.api_get("https://api.github.com/repos/CTFd/CTFd/commits?per_page=100"))
+    return len(ApiTool.api_get("https://api.github.com/repos/CTFd/CTFd/commits"))
 
 
 @register(name="get_repo_commits_contributors_num", description="descending order list of contributors per amount of commits")
 def get_repo_commits_contributors_num():
     """ descending order list of contributors per amount of commits """
-    print(ApiTool.api_get("https://api.github.com/repos/CTFd/CTFd/commits"))
     return len(ApiTool.api_get("https://api.github.com/repos/CTFd/CTFd/commits"))
 
 
